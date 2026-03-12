@@ -1,17 +1,970 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="WAS Boutique - Luxury Jewelry & Custom Hats. We Are Sisters, bringing you exquisite pieces that tell your unique story." />
     <meta name="theme-color" content="#0D0D0D" />
-    <link rel="icon" type="image/png" href="./logo_still.png" />
-    <link rel="apple-touch-icon" href="./logo_still.png" />
+    <link rel="icon" type="image/png" href="/logo_still.png" />
+    <link rel="apple-touch-icon" href="/logo_still.png" />
     <title>WAS Boutique | Luxury Jewelry & Custom Hats</title>
-    <script type="module" crossorigin src="./assets/index-Dta1Ivl0.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-C1DDSgJz.css">
-  </head>
-  <body>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.6s ease-out; }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        .shimmer { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        
+        .glass { background: rgba(13, 13, 13, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .gold-gradient { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%); }
+        .text-gold { color: #fbbf24; }
+        .border-gold { border-color: #fbbf24; }
+        .bg-gold { background-color: #fbbf24; }
+        
+        .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .hover-lift:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(251, 191, 36, 0.15); }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0d0d0d; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #fbbf24; }
+        
+        .product-card:hover .product-overlay { opacity: 1; }
+        .product-overlay { opacity: 0; transition: opacity 0.3s ease; }
+        
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #fbbf24; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1); }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: '#fbbf24',
+                        'gold-dark': '#d97706',
+                        dark: '#0d0d0d',
+                        darker: '#080808'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-white antialiased">
     <div id="root"></div>
-  </body>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, createContext, useContext } = React;
+
+        // ==========================================
+        // ICONS
+        // ==========================================
+        const Icons = {
+            Menu: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>,
+            X: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>,
+            ShoppingBag: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>,
+            Star: ({className, fill}) => <svg className={className} fill={fill || "none"} stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+            ArrowRight: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>,
+            Instagram: ({className}) => <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>,
+            Lock: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+            Package: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>,
+            Grid3X3: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
+            Settings: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+            CreditCard: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,
+            LogOut: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+            Plus: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+            Trash2: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
+            Edit2: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
+            Upload: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+            Check: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
+            Eye: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            EyeOff: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>,
+            Search: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+            AlertCircle: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+            ChevronRight: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>,
+            Heart: ({className}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        };
+
+        // ==========================================
+        // STORE / CONTEXT
+        // ==========================================
+        const StoreContext = createContext(null);
+
+        const StoreProvider = ({ children }) => {
+            // Initialize data from localStorage or defaults
+            const [products, setProducts] = useState(() => {
+                const saved = localStorage.getItem('was_products');
+                return saved ? JSON.parse(saved) : [
+                    {
+                        id: '1',
+                        name: 'Golden Eternity Necklace',
+                        sku: 'JN001',
+                        price: 299.99,
+                        description: 'Elegant 18k gold-plated necklace with crystal pendant',
+                        categoryId: '1',
+                        images: ['https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&h=600&fit=crop'],
+                        stock: 15,
+                        featured: true
+                    },
+                    {
+                        id: '2',
+                        name: 'Custom Embroidered Hat',
+                        sku: 'CH001',
+                        price: 89.99,
+                        description: 'Premium cotton hat with custom embroidery',
+                        categoryId: '2',
+                        images: ['https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=600&fit=crop'],
+                        stock: 30,
+                        featured: true
+                    },
+                    {
+                        id: '3',
+                        name: 'Diamond Stud Earrings',
+                        sku: 'JE001',
+                        price: 499.99,
+                        description: 'Classic diamond studs in sterling silver',
+                        categoryId: '1',
+                        images: ['https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&h=600&fit=crop'],
+                        stock: 8,
+                        featured: false
+                    },
+                    {
+                        id: '4',
+                        name: 'Vintage Pearl Bracelet',
+                        sku: 'JB001',
+                        price: 189.99,
+                        description: 'Handcrafted pearl bracelet with gold clasp',
+                        categoryId: '1',
+                        images: ['https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&h=600&fit=crop'],
+                        stock: 12,
+                        featured: true
+                    }
+                ];
+            });
+
+            const [categories, setCategories] = useState(() => {
+                const saved = localStorage.getItem('was_categories');
+                return saved ? JSON.parse(saved) : [
+                    { id: '1', name: 'Jewelry', image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop', description: 'Exquisite jewelry pieces', productCount: 3 },
+                    { id: '2', name: 'Custom Hats', image: 'https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=400&h=400&fit=crop', description: 'Personalized headwear', productCount: 1 },
+                    { id: '3', name: 'Accessories', image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400&h=400&fit=crop', description: 'Fashion accessories', productCount: 0 }
+                ];
+            });
+
+            const [settings, setSettings] = useState(() => {
+                const saved = localStorage.getItem('was_settings');
+                return saved ? JSON.parse(saved) : {
+                    storeName: 'WAS Boutique',
+                    storeEmail: 'hello@wasboutique.com',
+                    storePhone: '+1 (555) 123-4567',
+                    storeAddress: '123 Fashion Ave, New York, NY 10001',
+                    squareEnvironment: 'sandbox',
+                    squareApplicationId: 'sq0idp-sandbox',
+                    squareLocationId: 'L-sandbox'
+                };
+            });
+
+            const [cart, setCart] = useState(() => {
+                const saved = localStorage.getItem('was_cart');
+                return saved ? JSON.parse(saved) : [];
+            });
+
+            const [isAuthenticated, setIsAuthenticated] = useState(() => {
+                return localStorage.getItem('was_admin_auth') === 'true';
+            });
+
+            // Persist to localStorage
+            useEffect(() => localStorage.setItem('was_products', JSON.stringify(products)), [products]);
+            useEffect(() => localStorage.setItem('was_categories', JSON.stringify(categories)), [categories]);
+            useEffect(() => localStorage.setItem('was_settings', JSON.stringify(settings)), [settings]);
+            useEffect(() => localStorage.setItem('was_cart', JSON.stringify(cart)), [cart]);
+
+            // Admin functions
+            const login = (password) => {
+                if (password === 'admin123') {
+                    setIsAuthenticated(true);
+                    localStorage.setItem('was_admin_auth', 'true');
+                    return true;
+                }
+                return false;
+            };
+
+            const logout = () => {
+                setIsAuthenticated(false);
+                localStorage.removeItem('was_admin_auth');
+            };
+
+            const addProduct = (product) => {
+                const newProduct = { ...product, id: Date.now().toString() };
+                setProducts(prev => [...prev, newProduct]);
+                setCategories(prev => prev.map(cat => 
+                    cat.id === product.categoryId ? { ...cat, productCount: cat.productCount + 1 } : cat
+                ));
+            };
+
+            const updateProduct = (id, updates) => {
+                const old = products.find(p => p.id === id);
+                setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+                if (updates.categoryId && old?.categoryId !== updates.categoryId) {
+                    setCategories(prev => prev.map(cat => {
+                        if (cat.id === old.categoryId) return { ...cat, productCount: cat.productCount - 1 };
+                        if (cat.id === updates.categoryId) return { ...cat, productCount: cat.productCount + 1 };
+                        return cat;
+                    }));
+                }
+            };
+
+            const deleteProduct = (id) => {
+                const p = products.find(x => x.id === id);
+                setProducts(prev => prev.filter(x => x.id !== id));
+                if (p) setCategories(prev => prev.map(cat => cat.id === p.categoryId ? { ...cat, productCount: Math.max(0, cat.productCount - 1) } : cat));
+            };
+
+            const addCategory = (cat) => {
+                setCategories(prev => [...prev, { ...cat, id: Date.now().toString(), productCount: 0 }]);
+            };
+
+            const updateCategory = (id, updates) => {
+                setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+            };
+
+            const deleteCategory = (id) => {
+                setCategories(prev => prev.filter(c => c.id !== id));
+                setProducts(prev => prev.map(p => p.categoryId === id ? { ...p, categoryId: '' } : p));
+            };
+
+            const toggleFeatured = (id) => {
+                setProducts(prev => prev.map(p => p.id === id ? { ...p, featured: !p.featured } : p));
+            };
+
+            const addToCart = (product) => {
+                setCart(prev => {
+                    const existing = prev.find(item => item.id === product.id);
+                    if (existing) {
+                        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+                    }
+                    return [...prev, { ...product, qty: 1 }];
+                });
+            };
+
+            const removeFromCart = (id) => {
+                setCart(prev => prev.filter(item => item.id !== id));
+            };
+
+            return (
+                <StoreContext.Provider value={{
+                    products, categories, settings, cart, isAuthenticated,
+                    login, logout,
+                    addProduct, updateProduct, deleteProduct,
+                    addCategory, updateCategory, deleteCategory,
+                    toggleFeatured, updateSettings: setSettings,
+                    addToCart, removeFromCart
+                }}>
+                    {children}
+                </StoreContext.Provider>
+            );
+        };
+
+        const useStore = () => useContext(StoreContext);
+
+        // ==========================================
+        // UI COMPONENTS
+        // ==========================================
+        const Button = ({ children, onClick, variant = 'primary', className = '', type = 'button' }) => {
+            const variants = {
+                primary: 'bg-gold text-black hover:bg-gold-dark font-semibold',
+                secondary: 'bg-white/10 text-white hover:bg-white/20 border border-white/20',
+                outline: 'border-2 border-gold text-gold hover:bg-gold hover:text-black',
+                ghost: 'text-white/70 hover:text-white hover:bg-white/10',
+                danger: 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/50'
+            };
+            return (
+                <button type={type} onClick={onClick} className={`px-6 py-3 rounded-full transition-all duration-300 ${variants[variant]} ${className}`}>
+                    {children}
+                </button>
+            );
+        };
+
+        const Badge = ({ children, color = 'gold' }) => (
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${color === 'gold' ? 'bg-gold/20 text-gold' : 'bg-white/10 text-white/70'}`}>
+                {children}
+            </span>
+        );
+
+        // ==========================================
+        // LANDING PAGE COMPONENTS
+        // ==========================================
+        const Header = ({ onOpenAdmin }) => {
+            const [isScrolled, setIsScrolled] = useState(false);
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+            const { cart } = useStore();
+
+            useEffect(() => {
+                const handleScroll = () => setIsScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const scrollTo = (id) => {
+                document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+                setMobileMenuOpen(false);
+            };
+
+            return (
+                <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'glass py-4' : 'py-6 bg-transparent'}`}>
+                    <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                            <div className="w-12 h-12 rounded-full gold-gradient flex items-center justify-center text-black font-bold text-xl font-playfair">W</div>
+                            <span className="text-2xl font-playfair font-bold tracking-wide">WAS</span>
+                        </div>
+
+                        <nav className="hidden md:flex items-center gap-8">
+                            {['Collections', 'Featured', 'About', 'Contact'].map(item => (
+                                <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-sm uppercase tracking-widest text-white/70 hover:text-gold transition-colors">
+                                    {item}
+                                </button>
+                            ))}
+                        </nav>
+
+                        <div className="flex items-center gap-4">
+                            <button onClick={onOpenAdmin} className="p-2 text-white/50 hover:text-gold transition-colors" title="Admin">
+                                <Icons.Lock className="w-5 h-5" />
+                            </button>
+                            <button className="relative p-2 text-white hover:text-gold transition-colors">
+                                <Icons.ShoppingBag className="w-6 h-6" />
+                                {cart.length > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold text-black text-xs font-bold rounded-full flex items-center justify-center">
+                                        {cart.reduce((a, b) => a + b.qty, 0)}
+                                    </span>
+                                )}
+                            </button>
+                            <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                                {mobileMenuOpen ? <Icons.X className="w-6 h-6" /> : <Icons.Menu className="w-6 h-6" />}
+                            </button>
+                        </div>
+                    </div>
+
+                    {mobileMenuOpen && (
+                        <div className="md:hidden absolute top-full left-0 right-0 glass border-t border-white/10 p-6">
+                            <nav className="flex flex-col gap-4">
+                                {['Collections', 'Featured', 'About', 'Contact'].map(item => (
+                                    <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-left text-lg py-2 border-b border-white/10">
+                                        {item}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    )}
+                </header>
+            );
+        };
+
+        const Hero = () => (
+            <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 z-0">
+                    <img src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=1920&h=1080&fit=crop" alt="Luxury Jewelry" className="w-full h-full object-cover opacity-40" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-dark/50 via-dark/80 to-dark" />
+                </div>
+                
+                <div className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-20">
+                    <Badge color="gold">Est. 2024</Badge>
+                    <h1 className="mt-6 text-5xl md:text-7xl lg:text-8xl font-playfair font-bold leading-tight">
+                        We Are <span className="text-gold">Sisters</span>
+                    </h1>
+                    <p className="mt-6 text-xl md:text-2xl text-white/60 max-w-2xl mx-auto font-light">
+                        Luxury jewelry & custom hats crafted with love. Every piece tells your unique story.
+                    </p>
+                    <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button onClick={() => document.getElementById('collections')?.scrollIntoView({ behavior: 'smooth' })}>
+                            Explore Collections <Icons.ArrowRight className="inline ml-2 w-5 h-5" />
+                        </Button>
+                        <Button variant="outline">View Lookbook</Button>
+                    </div>
+                </div>
+
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-float">
+                    <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
+                        <div className="w-1 h-2 bg-gold rounded-full animate-bounce" />
+                    </div>
+                </div>
+            </section>
+        );
+
+        const ProductCard = ({ product, onAdd }) => (
+            <div className="group relative bg-white/5 rounded-2xl overflow-hidden hover-lift">
+                <div className="aspect-square overflow-hidden relative">
+                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="product-overlay absolute inset-0 bg-black/60 flex items-center justify-center gap-3">
+                        <Button variant="primary" className="!py-2 !px-4 text-sm" onClick={() => onAdd(product)}>Add to Cart</Button>
+                    </div>
+                    {product.featured && <div className="absolute top-4 left-4"><Badge color="gold">Featured</Badge></div>}
+                </div>
+                <div className="p-6">
+                    <p className="text-gold text-sm font-medium mb-1">{useStore().categories.find(c => c.id === product.categoryId)?.name}</p>
+                    <h3 className="font-playfair text-xl font-semibold mb-2">{product.name}</h3>
+                    <p className="text-white/50 text-sm mb-3 line-clamp-2">{product.description}</p>
+                    <p className="text-2xl font-bold text-gold">${product.price.toFixed(2)}</p>
+                </div>
+            </div>
+        );
+
+        const Collections = () => {
+            const { categories, products } = useStore();
+            const [activeCat, setActiveCat] = useState('all');
+            const { addToCart } = useStore();
+
+            const filtered = activeCat === 'all' ? products : products.filter(p => p.categoryId === activeCat);
+
+            return (
+                <section id="collections" className="py-24 px-6">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-16">
+                            <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-4">Our Collections</h2>
+                            <p className="text-white/50 max-w-2xl mx-auto">Discover our curated selection of luxury pieces</p>
+                        </div>
+
+                        <div className="flex flex-wrap justify-center gap-3 mb-12">
+                            <button onClick={() => setActiveCat('all')} className={`px-6 py-2 rounded-full border transition-all ${activeCat === 'all' ? 'border-gold bg-gold/10 text-gold' : 'border-white/20 text-white/70 hover:border-gold'}`}>
+                                All
+                            </button>
+                            {categories.map(cat => (
+                                <button key={cat.id} onClick={() => setActiveCat(cat.id)} className={`px-6 py-2 rounded-full border transition-all ${activeCat === cat.id ? 'border-gold bg-gold/10 text-gold' : 'border-white/20 text-white/70 hover:border-gold'}`}>
+                                    {cat.name}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {filtered.map(product => (
+                                <ProductCard key={product.id} product={product} onAdd={addToCart} />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const Featured = () => {
+            const { products } = useStore();
+            const featured = products.filter(p => p.featured).slice(0, 3);
+
+            return (
+                <section id="featured" className="py-24 bg-white/5">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="flex flex-col md:flex-row items-end justify-between mb-12">
+                            <div>
+                                <Badge color="gold">Handpicked</Badge>
+                                <h2 className="text-4xl md:text-5xl font-playfair font-bold mt-4">Featured Pieces</h2>
+                            </div>
+                            <Button variant="ghost" className="mt-4 md:mt-0">View All <Icons.ChevronRight className="inline w-4 h-4" /></Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {featured.map((product, idx) => (
+                                <div key={product.id} className={`relative ${idx === 1 ? 'md:-mt-8' : ''}`}>
+                                    <div className="aspect-[3/4] rounded-2xl overflow-hidden relative group">
+                                        <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent" />
+                                        <div className="absolute bottom-0 left-0 right-0 p-6">
+                                            <p className="text-gold font-medium mb-1">${product.price.toFixed(2)}</p>
+                                            <h3 className="text-2xl font-playfair font-bold">{product.name}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const About = () => (
+            <section id="about" className="py-24 px-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid md:grid-cols-2 gap-16 items-center">
+                        <div className="relative">
+                            <div className="aspect-[4/5] rounded-2xl overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1617038224557-69d61629fd8e?w=800&h=1000&fit=crop" alt="WAS Boutique" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="absolute -bottom-8 -right-8 w-48 h-48 gold-gradient rounded-2xl flex items-center justify-center text-black p-6">
+                                <div className="text-center">
+                                    <p className="text-4xl font-playfair font-bold">10+</p>
+                                    <p className="text-sm font-medium">Years of Excellence</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <Badge color="gold">Our Story</Badge>
+                            <h2 className="text-4xl md:text-5xl font-playfair font-bold mt-4 mb-6">Sisters Crafting Dreams</h2>
+                            <p className="text-white/60 text-lg leading-relaxed mb-6">
+                                Founded by two sisters with a passion for timeless elegance, WAS Boutique brings you carefully curated luxury jewelry and custom-designed hats. Each piece in our collection is selected or crafted with intention, telling a story of artistry and dedication.
+                            </p>
+                            <p className="text-white/60 text-lg leading-relaxed mb-8">
+                                We believe that accessories are more than adornments—they are expressions of individuality, heirlooms in the making, and tokens of life's precious moments.
+                            </p>
+                            <div className="flex gap-8">
+                                <div>
+                                    <p className="text-3xl font-playfair font-bold text-gold">500+</p>
+                                    <p className="text-white/50 text-sm">Happy Clients</p>
+                                </div>
+                                <div>
+                                    <p className="text-3xl font-playfair font-bold text-gold">50+</p>
+                                    <p className="text-white/50 text-sm">Unique Designs</p>
+                                </div>
+                                <div>
+                                    <p className="text-3xl font-playfair font-bold text-gold">100%</p>
+                                    <p className="text-white/50 text-sm">Handcrafted</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        );
+
+        const Footer = () => (
+            <footer id="contact" className="bg-darker border-t border-white/10 pt-20 pb-10 px-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid md:grid-cols-4 gap-12 mb-16">
+                        <div className="md:col-span-2">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-black font-bold font-playfair">W</div>
+                                <span className="text-2xl font-playfair font-bold">WAS Boutique</span>
+                            </div>
+                            <p className="text-white/50 max-w-md mb-6">Luxury jewelry and custom hats crafted with love. Every piece tells your unique story.</p>
+                            <div className="flex gap-4">
+                                <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold hover:text-black transition-all">
+                                    <Icons.Instagram className="w-5 h-5" />
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 className="font-bold mb-4">Quick Links</h4>
+                            <ul className="space-y-3 text-white/50">
+                                <li><button onClick={() => document.getElementById('collections')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-gold transition-colors">Collections</button></li>
+                                <li><button onClick={() => document.getElementById('featured')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-gold transition-colors">Featured</button></li>
+                                <li><button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-gold transition-colors">About Us</button></li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 className="font-bold mb-4">Contact</h4>
+                            <ul className="space-y-3 text-white/50">
+                                <li>hello@wasboutique.com</li>
+                                <li>+1 (555) 123-4567</li>
+                                <li>123 Fashion Ave<br/>New York, NY 10001</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <p className="text-white/30 text-sm">© 2024 WAS Boutique. All rights reserved.</p>
+                        <p className="text-white/30 text-sm">Made with <Icons.Heart className="inline w-4 h-4 text-red-500 fill-red-500" /> by sisters</p>
+                    </div>
+                </div>
+            </footer>
+        );
+
+        // ==========================================
+        // ADMIN PANEL COMPONENTS
+        // ==========================================
+        const AdminLogin = ({ onLogin }) => {
+            const [password, setPassword] = useState('');
+            const [showPass, setShowPass] = useState(false);
+            const [error, setError] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (onLogin(password)) {
+                    setError('');
+                } else {
+                    setError('Invalid password. Try "admin123"');
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-dark relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gold/10 via-transparent to-transparent" />
+                    
+                    <div className="relative w-full max-w-md p-8 mx-4 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+                        <div className="text-center mb-8">
+                            <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gold-gradient flex items-center justify-center">
+                                <Icons.Lock className="w-10 h-10 text-black" />
+                            </div>
+                            <h1 className="text-3xl font-playfair font-bold text-gold mb-2">Admin Access</h1>
+                            <p className="text-white/50">Enter password to manage your store</p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="relative">
+                                <input
+                                    type={showPass ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Password"
+                                    className="w-full px-4 py-3 bg-black/50 border border-white/20 rounded-xl text-white placeholder-white/30 focus:border-gold"
+                                />
+                                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
+                                    {showPass ? <Icons.EyeOff className="w-5 h-5" /> : <Icons.Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                            {error && <p className="text-red-400 text-sm">{error}</p>}
+                            <button type="submit" className="w-full py-3 gold-gradient text-black font-bold rounded-xl hover:opacity-90 transition-opacity">
+                                Login
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminDashboard = ({ onClose }) => {
+            const { logout, products, categories, addProduct, updateProduct, deleteProduct, addCategory, updateCategory, deleteCategory, toggleFeatured } = useStore();
+            const [activeTab, setActiveTab] = useState('products');
+            const [showProductForm, setShowProductForm] = useState(false);
+            const [showCategoryForm, setShowCategoryForm] = useState(false);
+            const [editing, setEditing] = useState(null);
+
+            const [formData, setFormData] = useState({
+                name: '', sku: '', price: '', stock: '', categoryId: '', description: '', images: [], featured: false
+            });
+
+            const resetForm = () => {
+                setFormData({ name: '', sku: '', price: '', stock: '', categoryId: categories[0]?.id || '', description: '', images: [], featured: false });
+                setEditing(null);
+            };
+
+            const handleSaveProduct = (e) => {
+                e.preventDefault();
+                const data = {
+                    ...formData,
+                    price: parseFloat(formData.price),
+                    stock: parseInt(formData.stock)
+                };
+                if (editing) {
+                    updateProduct(editing.id, data);
+                } else {
+                    addProduct(data);
+                }
+                setShowProductForm(false);
+                resetForm();
+            };
+
+            const handleEditProduct = (p) => {
+                setEditing(p);
+                setFormData({
+                    name: p.name, sku: p.sku, price: p.price.toString(), stock: p.stock.toString(),
+                    categoryId: p.categoryId, description: p.description, images: p.images, featured: p.featured
+                });
+                setShowProductForm(true);
+            };
+
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setFormData({ ...formData, images: [...formData.images, reader.result] });
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const tabs = [
+                { id: 'products', label: 'Products', icon: Icons.Package },
+                { id: 'categories', label: 'Categories', icon: Icons.Grid3X3 },
+                { id: 'featured', label: 'Featured', icon: Icons.Star },
+            ];
+
+            return (
+                <div className="min-h-screen bg-dark">
+                    {/* Header */}
+                    <header className="h-16 bg-white/5 border-b border-white/10 flex items-center justify-between px-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center text-black font-bold">W</div>
+                            <span className="font-playfair font-bold text-xl">Admin</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button onClick={onClose} className="text-white/50 hover:text-white text-sm">View Store</button>
+                            <button onClick={logout} className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                                <Icons.LogOut className="w-4 h-4" /> Logout
+                            </button>
+                        </div>
+                    </header>
+
+                    <div className="flex">
+                        {/* Sidebar */}
+                        <aside className="w-64 min-h-[calc(100vh-64px)] bg-white/5 border-r border-white/10 p-4 hidden md:block">
+                            <nav className="space-y-2">
+                                {tabs.map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === tab.id ? 'bg-gold text-black font-semibold' : 'text-white/70 hover:bg-white/10'}`}
+                                    >
+                                        <tab.icon className="w-5 h-5" />
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </nav>
+                        </aside>
+
+                        {/* Content */}
+                        <main className="flex-1 p-6 md:p-8 overflow-auto">
+                            {activeTab === 'products' && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-2xl font-playfair font-bold">Products ({products.length})</h2>
+                                        <Button onClick={() => { resetForm(); setShowProductForm(true); }}><Icons.Plus className="w-4 h-4 mr-2" /> Add Product</Button>
+                                    </div>
+
+                                    <div className="grid gap-4">
+                                        {products.map(p => (
+                                            <div key={p.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                                <img src={p.images[0]} alt={p.name} className="w-16 h-16 rounded-lg object-cover bg-black" />
+                                                <div className="flex-1">
+                                                    <h3 className="font-semibold">{p.name}</h3>
+                                                    <p className="text-sm text-white/50">{p.sku} • {categories.find(c => c.id === p.categoryId)?.name}</p>
+                                                </div>
+                                                <span className="text-gold font-bold">${p.price.toFixed(2)}</span>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => handleEditProduct(p)} className="p-2 text-white/50 hover:text-gold"><Icons.Edit2 className="w-4 h-4" /></button>
+                                                    <button onClick={() => deleteProduct(p.id)} className="p-2 text-white/50 hover:text-red-500"><Icons.Trash2 className="w-4 h-4" /></button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'categories' && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-2xl font-playfair font-bold">Categories</h2>
+                                        <Button onClick={() => setShowCategoryForm(true)}><Icons.Plus className="w-4 h-4 mr-2" /> Add Category</Button>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        {categories.map(c => (
+                                            <div key={c.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                                <div className="flex items-center gap-4">
+                                                    <img src={c.image} alt={c.name} className="w-16 h-16 rounded-lg object-cover" />
+                                                    <div className="flex-1">
+                                                        <h3 className="font-semibold">{c.name}</h3>
+                                                        <p className="text-sm text-white/50">{c.productCount} products</p>
+                                                    </div>
+                                                    <button onClick={() => deleteCategory(c.id)} className="p-2 text-white/50 hover:text-red-500"><Icons.Trash2 className="w-4 h-4" /></button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'featured' && (
+                                <div className="space-y-6">
+                                    <h2 className="text-2xl font-playfair font-bold">Featured Products</h2>
+                                    <div className="grid gap-4">
+                                        {products.map(p => (
+                                            <div key={p.id} className={`flex items-center gap-4 p-4 rounded-xl border ${p.featured ? 'bg-gold/10 border-gold/30' : 'bg-white/5 border-white/10'}`}>
+                                                <img src={p.images[0]} alt={p.name} className="w-16 h-16 rounded-lg object-cover" />
+                                                <div className="flex-1">
+                                                    <h3 className="font-semibold">{p.name}</h3>
+                                                    <p className="text-sm text-white/50">${p.price.toFixed(2)}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => toggleFeatured(p.id)}
+                                                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${p.featured ? 'bg-gold text-black' : 'bg-white/10 text-white'}`}
+                                                >
+                                                    {p.featured ? 'Featured' : 'Feature'}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </main>
+                    </div>
+
+                    {/* Product Form Modal */}
+                    {showProductForm && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                            <div className="w-full max-w-2xl bg-dark border border-white/10 rounded-2xl max-h-[90vh] overflow-auto">
+                                <div className="flex items-center justify-between p-6 border-b border-white/10">
+                                    <h3 className="text-xl font-playfair font-bold text-gold">{editing ? 'Edit Product' : 'Add Product'}</h3>
+                                    <button onClick={() => setShowProductForm(false)} className="text-white/50 hover:text-white"><Icons.X className="w-6 h-6" /></button>
+                                </div>
+                                <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm text-white/70 mb-1">Product Name</label>
+                                            <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-white/70 mb-1">SKU</label>
+                                            <input required value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm text-white/70 mb-1">Price ($)</label>
+                                            <input required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-white/70 mb-1">Stock</label>
+                                            <input required type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-white/70 mb-1">Category</label>
+                                        <select value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white">
+                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-white/70 mb-1">Description</label>
+                                        <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white resize-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-white/70 mb-1">Images</label>
+                                        <div className="flex gap-2 flex-wrap mb-2">
+                                            {formData.images.map((img, i) => (
+                                                <div key={i} className="relative">
+                                                    <img src={img} alt="" className="w-20 h-20 rounded-lg object-cover" />
+                                                    <button type="button" onClick={() => setFormData({...formData, images: formData.images.filter((_, idx) => idx !== i)})} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs">×</button>
+                                                </div>
+                                            ))}
+                                            <label className="w-20 h-20 border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:border-gold">
+                                                <Icons.Upload className="w-6 h-6 text-white/50" />
+                                                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input type="checkbox" id="featured" checked={formData.featured} onChange={e => setFormData({...formData, featured: e.target.checked})} className="w-4 h-4 accent-gold" />
+                                        <label htmlFor="featured" className="text-sm text-white/70">Feature on homepage</label>
+                                    </div>
+                                    <div className="flex gap-4 pt-4">
+                                        <button type="button" onClick={() => setShowProductForm(false)} className="flex-1 py-3 border border-white/20 rounded-xl hover:bg-white/5">Cancel</button>
+                                        <button type="submit" className="flex-1 py-3 gold-gradient text-black font-bold rounded-xl">{editing ? 'Update' : 'Add'} Product</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Category Form Modal */}
+                    {showCategoryForm && (
+                        <CategoryFormModal onClose={() => setShowCategoryForm(false)} onSave={(data) => { addCategory(data); setShowCategoryForm(false); }} />
+                    )}
+                </div>
+            );
+        };
+
+        const CategoryFormModal = ({ onClose, onSave }) => {
+            const [name, setName] = useState('');
+            const [description, setDescription] = useState('');
+            const [image, setImage] = useState('');
+
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setImage(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSave({ name, description, image });
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md bg-dark border border-white/10 rounded-2xl">
+                        <div className="flex items-center justify-between p-6 border-b border-white/10">
+                            <h3 className="text-xl font-playfair font-bold text-gold">Add Category</h3>
+                            <button onClick={onClose} className="text-white/50 hover:text-white"><Icons.X className="w-6 h-6" /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm text-white/70 mb-1">Category Name</label>
+                                <input required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white" />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-white/70 mb-1">Description</label>
+                                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white resize-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-white/70 mb-1">Image</label>
+                                {image ? (
+                                    <div className="relative inline-block">
+                                        <img src={image} alt="" className="w-32 h-32 rounded-lg object-cover" />
+                                        <button type="button" onClick={() => setImage('')} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full">×</button>
+                                    </div>
+                                ) : (
+                                    <label className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/20 rounded-lg cursor-pointer hover:border-gold">
+                                        <Icons.Upload className="w-5 h-5" /> Upload Image
+                                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                    </label>
+                                )}
+                            </div>
+                            <div className="flex gap-4 pt-4">
+                                <button type="button" onClick={onClose} className="flex-1 py-3 border border-white/20 rounded-xl hover:bg-white/5">Cancel</button>
+                                <button type="submit" className="flex-1 py-3 gold-gradient text-black font-bold rounded-xl">Add Category</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // MAIN APP
+        // ==========================================
+        const App = () => {
+            const [showAdmin, setShowAdmin] = useState(false);
+            const { isAuthenticated, login } = useStore();
+
+            if (showAdmin) {
+                if (!isAuthenticated) {
+                    return <AdminLogin onLogin={(pass) => {
+                        const success = login(pass);
+                        if (!success) return false;
+                        return true;
+                    }} />;
+                }
+                return <AdminDashboard onClose={() => setShowAdmin(false)} />;
+            }
+
+            return (
+                <div className="animate-fade-in">
+                    <Header onOpenAdmin={() => setShowAdmin(true)} />
+                    <Hero />
+                    <Collections />
+                    <Featured />
+                    <About />
+                    <Footer />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <StoreProvider>
+                <App />
+            </StoreProvider>
+        );
+    </script>
+</body>
 </html>
